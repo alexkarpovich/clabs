@@ -1,9 +1,11 @@
 CC=gcc
-CFLAGS=-c -Wall
-LDFLAGS=
-SOURCES=main.c quicksort.c
+CFLAGS=-Wall -std=c99
+LDFLAGS=-g -v
+SOURCES=main.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=main
+
+.PHONY: clean
 
 all: $(SOURCES) $(EXECUTABLE)
 	
@@ -12,3 +14,6 @@ $(EXECUTABLE): $(OBJECTS)
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@
+
+clean:
+	rm -f *.o $(EXECUTABLE)
