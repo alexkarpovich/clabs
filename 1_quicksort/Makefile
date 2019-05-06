@@ -1,6 +1,6 @@
 CC=gcc
-CFLAGS=-Wall -std=c99
-LDFLAGS=-g -v
+CFLAGS=-Wall -g -O0
+LDFLAGS=-g
 SOURCES=main.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=main
@@ -12,7 +12,7 @@ all: $(SOURCES) $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS) 
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
 
-.cpp.o:
+.o:
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
