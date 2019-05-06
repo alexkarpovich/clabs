@@ -1,8 +1,11 @@
 
-int partition(long long* arr, long long len) {
-    long long pivot = arr[0];    
-    long long lidc = 1;
-    long long ridc = len - 1;
+#ifdef T    
+#include "templates.h"    
+long TEMPLATE(partition, T) (T* arr, long len)  
+{
+    T pivot = arr[0];    
+    long lidc = 1;
+    long ridc = len - 1;
 
     while (1) {
         while (lidc <= ridc && arr[lidc] <= pivot) ++lidc;
@@ -12,7 +15,7 @@ int partition(long long* arr, long long len) {
             break;
         }
 
-        long long tmp = arr[lidc];
+        T tmp = arr[lidc];
         arr[lidc] = arr[ridc];
         arr[ridc] = tmp;        
     }
@@ -23,13 +26,15 @@ int partition(long long* arr, long long len) {
     return ridc;
 }
 
-void quicksort(long long* arr, long long len) {
+void TEMPLATE(qsort, T) (T* arr, long len) 
+{
     if (len < 2) {
         return;
     }
     
-    long long sid = partition(arr, len);
+    long sid = TEMPLATE(partition, T)(arr, len);
 
-    quicksort(arr, sid);
-    quicksort(arr+sid+1, len-sid-1);
+    TEMPLATE(qsort, T)(arr, sid);
+    TEMPLATE(qsort, T)(arr+sid+1, len-sid-1);
 }
+#endif
