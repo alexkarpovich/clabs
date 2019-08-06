@@ -15,11 +15,6 @@ int max(int x, int y) {
     return x ^ ((x ^ y) & -(x < y));  
 } 
 
-void printa(array* arr) {
-    for (int i = 0; i < arr->len; i++) printf("%d ", arr->d[i]);
-    printf("\n");
-}
-
 array* init(int cap) {
     array* arr = (int*)malloc(sizeof(array));
     arr->len = 0;
@@ -80,19 +75,19 @@ void new_sets(int k, int v, array* candidates, array* not, array* new_candidates
     }
 }
 
-void extend(int k, array* compsub, array* candidates, array* not) {
+void extend(int* max_subset, int k, array* compsub, array* candidates, array* not) {
     int v;
-    array* new_candidates = init(CAP_SIZE), *new_not = init(CAP_SIZE);
 
     while (candidates->len > 0 && check_not(k, candidates, not)) {
         v = candidates->d[0];
         append(compsub, v);
+
+        array* new_candidates = init(CAP_SIZE), *new_not = init(CAP_SIZE);
         new_sets(k, v, candidates, not, new_candidates, new_not);
 
         if (!new_candidates->len && !new_not->len) {
-            printf("Max clique = %d:\n", compsub->len);
-            printa(compsub);
-        } else extend(k, compsub, new_candidates, new_not);
+            if (compsub->len > *max_subset) *max_subset = compsub->len;
+        } else extend(max_subset, k, compsub, new_candidates, new_not);
 
         del(candidates, v);
         del(compsub, v);
@@ -100,16 +95,51 @@ void extend(int k, array* compsub, array* candidates, array* not) {
     }
 }
 
+
+
 int main(void) {
-    int k = 7;
-    int A[15] = {278, 576, 496, 727, 410, 124, 338, 149, 209, 702, 282, 718, 771, 575, 436};
-    array* candidates = init(15 + CAP_SIZE), *not = init(CAP_SIZE), *compsub = init(CAP_SIZE);
+    int max_subset = 0, id = 0, prev_i = 0;
+    int* data = malloc(3 * sizeof(int));
 
-    memcpy(candidates->d, A, 15 * sizeof(int));
-    candidates->len = 15;
+    char *buffer = NULL, *tmp = malloc(10 * sizeof(char));
+    size_t size = 0;
 
-    extend(k, compsub, candidates, not);
+    /* Open your_file in read-only mode */
+    FILE *fp = fopen("textcase.txt", "r");
 
-    printf("Hello World\n");
+    /* Get the buffer size */
+    fseek(fp, 0, SEEK_END); /* Go to end of file */
+    size = ftell(fp); /* How many bytes did we pass ? */
+
+    /* Set position of stream to the beginning */
+    rewind(fp);
+
+    /* Allocate the buffer (no need to initialize it with calloc) */
+    buffer = malloc((size + 1) * sizeof(*buffer)); /* size + 1 byte for the \0 */
+
+    /* Read the file into the buffer */
+    fread(buffer, size, 1, fp); /* Read 1 chunk of size bytes from fp into buffer */
+
+    /* NULL-terminate the buffer */
+    buffer[size] = '\0';
+
+    for (int i = 0; i < size; i++) {
+        if (buffer[i] == ' ') {
+            strncpy(tmp, buffer + prev_i, i - prev_i);
+            data[id++] = atoi(tmp);
+            prev_i = i + 1;
+        } else if (buffer[i] == '\n') {
+            data = (int*) realloc(data, data[0] * sizeof(int));
+        }  
+    }
+
+    array* candidates = init(data[0] + CAP_SIZE), *not = init(CAP_SIZE), *compsub = init(CAP_SIZE);
+
+    memcpy(candidates->d, data + 3, data[0] * sizeof(int));
+    candidates->len = data[0];
+
+    extend(&max_subset, data[1], compsub, candidates, not);
+
+    printf("Max non-divisible subset length = %d (expected = %d)\n", max_subset, data[2]);
     return 0;
 }
