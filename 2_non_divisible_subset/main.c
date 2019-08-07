@@ -1,8 +1,11 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define CAP_SIZE 10
+#define min(a, b) (((a) < (b)) ? (a) : (b)) 
 
 
 typedef struct {
@@ -16,7 +19,7 @@ int max(int x, int y) {
 } 
 
 array* init(int cap) {
-    array* arr = (int*)malloc(sizeof(array));
+    array* arr = malloc(sizeof(array));
     arr->len = 0;
     arr->cap = cap;
     arr->d = (int*)malloc(arr->cap * sizeof(int));
@@ -89,6 +92,9 @@ void extend(int* max_subset, int k, array* compsub, array* candidates, array* no
             if (compsub->len > *max_subset) *max_subset = compsub->len;
         } else extend(max_subset, k, compsub, new_candidates, new_not);
 
+        free(new_candidates->d);
+        free(new_not->d);
+
         del(candidates, v);
         del(compsub, v);
         append(not, v);
@@ -96,16 +102,39 @@ void extend(int* max_subset, int k, array* compsub, array* candidates, array* no
 }
 
 
+int process(int k, int s_count, int* s) {
+  int reminder, id, max_len = 0;
+  int* rmd = (int*)calloc(k, sizeof(int));
+
+  for (int i = 0; i < s_count; i++) {
+    reminder = s[i] % k;
+    id = min(reminder, k - reminder);
+    ++rmd[reminder];
+
+    if (max_len < rmd[id]) max_len = rmd[id];
+  }
+
+  for (int i = 0; i < k; i++) {
+      printf("[%d]%d ", i, rmd[i]);
+  }
+
+  return max_len;
+}
 
 int main(void) {
-    int max_subset = 0, id = 0, prev_i = 0;
+    int errnum = 0;
+    int len, max_subset = 0, id = 0, prev_i = 0;
     int* data = malloc(3 * sizeof(int));
 
     char *buffer = NULL, *tmp = malloc(10 * sizeof(char));
     size_t size = 0;
 
     /* Open your_file in read-only mode */
-    FILE *fp = fopen("textcase.txt", "r");
+    FILE *fp = fopen("test.txt", "r");
+    if (fp == NULL) {
+        errnum = errno;
+        goto exit;
+    }
 
     /* Get the buffer size */
     fseek(fp, 0, SEEK_END); /* Go to end of file */
@@ -115,31 +144,37 @@ int main(void) {
     rewind(fp);
 
     /* Allocate the buffer (no need to initialize it with calloc) */
-    buffer = malloc((size + 1) * sizeof(*buffer)); /* size + 1 byte for the \0 */
+    buffer = malloc(size * sizeof(*buffer)); /* size + 1 byte for the \0 */
 
     /* Read the file into the buffer */
     fread(buffer, size, 1, fp); /* Read 1 chunk of size bytes from fp into buffer */
 
-    /* NULL-terminate the buffer */
-    buffer[size] = '\0';
-
     for (int i = 0; i < size; i++) {
-        if (buffer[i] == ' ') {
-            strncpy(tmp, buffer + prev_i, i - prev_i);
-            data[id++] = atoi(tmp);
-            prev_i = i + 1;
-        } else if (buffer[i] == '\n') {
-            data = (int*) realloc(data, data[0] * sizeof(int));
-        }  
+        switch (buffer[i]) {
+            case '\n':
+                data = (int*) realloc(data, data[0] * sizeof(int));
+            case ' ':
+                len = i - prev_i;
+                strncpy(tmp, buffer + prev_i, len);
+                tmp[len] = '\0';
+                data[id++] = atoi(tmp);
+                prev_i = i + 1;
+        }
     }
 
-    array* candidates = init(data[0] + CAP_SIZE), *not = init(CAP_SIZE), *compsub = init(CAP_SIZE);
+    // array* candidates = init(data[0] + CAP_SIZE), *not = init(CAP_SIZE), *compsub = init(CAP_SIZE);
 
-    memcpy(candidates->d, data + 3, data[0] * sizeof(int));
-    candidates->len = data[0];
+    // memcpy(candidates->d, data + 3, data[0] * sizeof(int));
+    // candidates->len = data[0];
 
-    extend(&max_subset, data[1], compsub, candidates, not);
+    // extend(&max_subset, data[1], compsub, candidates, not);
+
+    max_subset = process(data[1], data[0], data + 3);
 
     printf("Max non-divisible subset length = %d (expected = %d)\n", max_subset, data[2]);
-    return 0;
+    
+    exit:
+        printf("%s\n", strerror(errnum));
+
+        return errnum;
 }

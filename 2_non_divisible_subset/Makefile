@@ -1,4 +1,11 @@
-CC=gcc
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	CC=gcc
+endif
+ifeq ($(UNAME_S),Darwin)
+	CC=clang
+endif
+
 CFLAGS=-Wall -g -O0
 LDFLAGS=-g -lm
 SOURCES=main.c
